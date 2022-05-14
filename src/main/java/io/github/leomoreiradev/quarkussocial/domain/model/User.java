@@ -6,7 +6,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "USERS")
-public class User extends PanacheEntityBase {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
