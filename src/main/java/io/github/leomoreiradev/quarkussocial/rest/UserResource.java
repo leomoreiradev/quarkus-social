@@ -9,9 +9,12 @@ import io.quarkus.hibernate.orm.panache.PanacheQuery;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Set;
 
 @Path("/users")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -21,9 +24,13 @@ public class UserResource {
     //Declarando a dependencia a ser usada
     private UserRepository userRepository;
 
-    @Inject //Injetando a dependencia userRepository
-    public UserResource(UserRepository userRepository) {
+    //Declarando a dependencia a ser usada
+    private Validator validator;
+
+    @Inject //Injetando a dependencia userRepository e validator
+    public UserResource(UserRepository userRepository, Validator validator) {
         this.userRepository = userRepository;
+        this.validator = validator;
     }
 
 
@@ -31,6 +38,19 @@ public class UserResource {
     @POST
     @Transactional //Essa anotation é necessaria para abrir uma transação no BD
     public Response createUser(CreateUserRequest userRequest){
+
+        /**
+         * O metodo validate retorna um Set de ConstraintViolation
+         */
+        Set<ConstraintViolation<CreateUserRequest>> violations = validator.validate(userRequest);
+
+        if(!violations.isEmpty()) {
+            //Encontre qualquer uma das violações
+            ConstraintViolation<CreateUserRequest> erro = violations.stream().findAny().get();
+            String errorMessage = erro.getMessage();
+
+            return Response.status(400).entity(errorMessage).build();
+        }
 
         User user = new User();
         user.setAge(userRequest.getAge());
