@@ -3,6 +3,7 @@ package io.github.leomoreiradev.quarkussocial.rest;
 
 import io.github.leomoreiradev.quarkussocial.domain.model.User;
 import io.github.leomoreiradev.quarkussocial.rest.dto.CreateUserRequest;
+import io.github.leomoreiradev.quarkussocial.rest.dto.UpdateUserRequest;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 
 import javax.transaction.Transactional;
@@ -35,6 +36,32 @@ public class UserResource {
         //Listando users
         PanacheQuery<User> query = User.findAll();
         return Response.ok(query.list()).build();
+    }
+
+    @DELETE
+    @Path("{id}")
+    @Transactional
+    public Response deleteUser(@PathParam("id") Long id){
+        User user = User.findById(id);
+        if(user != null) {
+          user.delete();
+          return Response.ok(Response.Status.NO_CONTENT).build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    @PUT
+    @Path("{id}")
+    @Transactional
+    public Response updateUser(@PathParam("id") Long id, UpdateUserRequest updateUserRequest){
+        User user = User.findById(id);
+        if(user != null) {
+            user.setName(updateUserRequest.getName());
+            user.setAge(updateUserRequest.getAge());
+
+            return Response.ok(user).build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 }
 
