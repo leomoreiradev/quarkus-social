@@ -6,12 +6,16 @@ import io.github.leomoreiradev.quarkussocial.domain.model.User;
 import io.github.leomoreiradev.quarkussocial.domain.repository.PostRepository;
 import io.github.leomoreiradev.quarkussocial.domain.repository.UserRepository;
 import io.github.leomoreiradev.quarkussocial.rest.dto.CreatePostRequest;
+import io.github.leomoreiradev.quarkussocial.rest.dto.PostResponse;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Sort;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.stream.Collectors;
 
 @Path("/users/{userId}/posts")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,7 +46,9 @@ public class PostResource {
 
         postRepository.persist(post);
 
-        return Response.status(Response.Status.CREATED).build();
+        return Response.status(Response.Status.CREATED.getStatusCode())
+                .entity(PostResponse.fromEntity(post))
+                .build();
     }
 
 
@@ -53,6 +59,17 @@ public class PostResource {
         if(user == null) {
             return Response.status( Response.Status.NOT_FOUND).build();
         }
-        return Response.ok().build();
+
+        PanacheQuery<Post> query = postRepository
+                .find("user", Sort.by("dateTime", Sort.Direction.Descending) ,user);
+
+        var listPosts = query.list();
+
+        var postResponseList = listPosts
+                                                    .stream()
+                                                    .map(post -> PostResponse.fromEntity(post))
+                                                    .collect(Collectors.toList());
+
+        return Response.ok(postResponseList).build();
     }
 }
